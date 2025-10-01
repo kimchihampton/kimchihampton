@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kimchihampton | Blog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'accent': '#4f46e5', // Indigo for links/accents
+                    }
+                }
+            }
+        }
+
+        // --- JavaScript for routing and Content Storage ---
+
+        /**
+         * Global variable to hold fetched blog post data.
+         * Initially empty, loaded from posts.json on DOMContentLoaded.
+         */
+        let posts = [];
+
+        // Global view state for routing
+        const views = {
+            INDEX: 'index',
+            ARCHIVE: 'archive',
+            ABOUT: 'about',
+            SINGLE_POST: 'single'
+        };
+
+        // Variable to hold the current view for back button functionality
+        let currentView = views.INDEX;
+
+
+        /**
+         * Switches the active view/section on the page.
+         */
+        function updateView(newView, postId = null) {
+            // Store the view we are moving *from* for the Back button unless we're viewing a single post
+            if (newView !== views.SINGLE_POST) {
+                currentView = newView;
+            }
+            
+            // Hide all main view containers
+            document.getElementById('post-list-view').classList.add('hidden');
+            document.getElementById('archive-view').classList.add('hidden');
+            document.getElementById('about-view').classList.add('hidden');
+            document.getElementById('single-post-view').classList.add('hidden');
+            document.getElementById('loading-indicator').classList.add('hidden');
+            
+            // Clear content from single view
+            document.getElementById('post-content').innerHTML = ''; 
+
+            // Show the requested view
+            switch (newView) {
+                case views.INDEX:
+                    document.getElementById('post-list-view').classList.remove('hidden');
+                    generatePostList(false); // Display recent posts
+                    break;
+                case views.ARCHIVE:
+                    document.getElementById('archive-view').classList.remove('hidden');
+                    generatePostList(true); // Display archived posts
+                    break;
+                case views.ABOUT:
+                    document.getElementById('about-view').classList.remove('hidden');
+                    break;
+                case views.SINGLE_POST:
+                    document.getElementById('single-post-view').classList.remove('hidden');
+                    showPost(postId);
+                    break;
+            }
+            window.scrollTo(0, 0);
+        }
+
+        /**
+         * Generates the HTML list of posts for the Index or Archive.
+         * @param {boolean} isArchiveMode - True to show archived posts, false for recent/main posts.
+         */
+        function generatePostList(isArchiveMode) {
+            // Determine which container to inject content into
+            const container = isArchiveMode ? document.getElementById('archive-content') : document.getElementById('post-list-view');
+            
+            // Set the appropriate heading
+            const heading = isArchiveMode ? 'Archived Pages (Older Thoughts)' : 'Recent Pages';
+            container.innerHTML = `<h1 class="text-4xl font-light tracking-wide mb-12 border-b border-gray-300 pb-4">${heading}</h1>`;
+
+            // Filter posts based on the mode
+            // Posts are loaded globally, so they are available here
+            const filteredPosts = posts.filter(post => post.isArchived === isArchiveMode);
+
+            filteredPosts.forEach(post => {
+                const article = document.createElement('article');
+                // Use a different class name for the article wrapper to differentiate from the parent container
+                article.className = 'post-preview-item group border-b border-gray-300 pb-8 cursor-pointer';
+                // Pass post ID to the click handler to load the full content
+                article.setAttribute('onclick', `updateView(views.SINGLE_POST, '${post.id}')`);
+                article.innerHTML = `
+                    <p class="text-sm text-gray-500 mb-2">${post.date}</p>
+                    <h2 class="text-2xl sm:text-3xl font-semibold mb-3 group-hover:text-accent transition duration-300">
+                        ${post.title}
+                    </h2>
+                    <p class="text-base text-gray-700 leading-relaxed line-clamp-2">
+                        ${post.snippet}
+                    </p>
+                    <span class="mt-2 inline-block text-accent text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">Read More &rarr;</span>
+                `;
+                container.appendChild(article);
+            });
+        }
+
+        /**
+         * Loads and displays the content for a specific post ID.
+         */
+        function showPost(postId) {
+            // Access the global posts array
+            const post = posts.find(p => p.id === postId);
+
+            if (post) {
+                // Wrap the raw text in <pre> to preserve line breaks and spacing from the original diary format
+                const contentHtml = `<pre class="whitespace-pre-wrap text-base leading-normal">${post.content}</pre>`;
+
+                document.getElementById('post-title').innerText = post.title;
+                document.getElementById('post-date').innerText = post.date;
+                document.getElementById('post-content').innerHTML = contentHtml;
+            }
+        }
+    </script>
+</head>
+<body class="px-4 sm:px-6 lg:px-20 py-12"> <header class="mb-16 mx-auto max-w-7xl"> <nav class="flex items-center justify-between">
+                <a href="#" onclick="updateView(views.INDEX)" class="text-2xl sm:text-3xl font-bold tracking-tight hover:text-accent transition duration-300">
+                    kimchihampton
+                </a>
+                <div class="flex space-x-3 sm:space-x-4 text-base">
+                    <a href="#" onclick="updateView(views.ARCHIVE)" class="text-gray-500 hover:text-accent transition duration-300">Archive</a>
+                    <a href="#" onclick="updateView(views.ABOUT)" class="text-gray-500 hover:text-accent transition duration-300">About</a>
+                </div>
+            </nav>
+        </header>
+
+        <div class="mx-auto max-w-7xl mb-12 p-4 bg-indigo-50 border-l-4 border-accent text-indigo-800 rounded">
+            <p class="text-sm font-medium">
+                <span class="font-bold">Daily Update Note:</span> New pages are typically uploaded between 11 PM to 12 AM IST every day.
+            </p>
+        </div>
+        <main id="view-container" class="mx-auto max-w-7xl"> <div id="loading-indicator" class="text-center py-20">
+                <p class="text-xl text-gray-500">Loading daily pages...</p>
+                <div class="mt-4">
+                    <svg class="animate-spin h-5 w-5 text-accent mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <section id="post-list-view" class="space-y-12 hidden">
+                    </section>
+
+                <section id="archive-view" class="space-y-12 hidden">
+                    <div id="archive-content" class="space-y-12">
+                        </div>
+                </section>
+
+                <section id="about-view" class="hidden">
+                    <h1 class="text-4xl font-light tracking-wide mb-12 border-b border-gray-300 pb-4">About the Author</h1>
+                    <div class="author-info-grid">
+                        <img src="https://placehold.co/100x100/1f2937/f7f7f7?text=Kimchi" 
+                             alt="Profile image stylized as Kimchi" 
+                             class="author-image"
+                             onerror="this.onerror=null;this.src='https://placehold.co/100x100/1f2937/f7f7f7?text=KH'"
+                        >
+                        <div class="space-y-6 text-base sm:text-lg text-gray-700">
+                            <p class="leading-relaxed">My name is kimchihampton. This blog is a space for my raw, unfiltered thoughts—a digital diary dedicated to the emotions, aspirations, and chaos of the current moment. I started this to practice clarity and to leave a trace of my evolving feelings.</p>
+                            <p class="leading-relaxed">I am currently navigating life, focusing on my growth ("Workkk"), hitting the gym daily, and learning what is required to be good in my field. "I believe that people change, ideas evolve, and in the end, everything fits together".</p>
+                            <p class="leading-relaxed">The content here is often deeply personal, written in my native conversational style (a mix of Hindi and English), reflecting my genuine voice. Thank you for stepping into this corner of my world.</p>
+                            <p class="text-sm text-gray-500 pt-4">— kimchihampton</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <article id="single-post-view" class="hidden">
+                    <button onclick="updateView(currentView)" class="flex items-center text-accent hover:text-gray-900 transition duration-300 mb-8">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        Back to List
+                    </button>
+                    
+                    <p id="post-date" class="text-sm text-gray-500 mb-3"></p>
+                    <h1 id="post-title" class="text-3xl sm:text-5xl font-extrabold mb-8 leading-tight"></h1>
+                    
+                    <div id="post-content" class="post-content-container text-base sm:text-lg">
+                        </div>
+                </article>
+
+            </main>
+        
+        <footer class="mt-20 pt-8 border-t border-gray-300 text-center text-sm text-gray-500 mx-auto max-w-7xl"> <p>&copy; 2025 kimchihampton </p>
+        </footer>
+
+    <script>
+        // Set up the initial view when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loading-indicator').classList.remove('hidden');
+
+            // Fetch data from posts.json
+            fetch('posts.json')
+                .then(response => {
+                    if (!response.ok) {
+                        // Log the full response status for debugging
+                        console.error('Network response was not ok:', response.status, response.statusText);
+                        throw new Error(`Failed to load posts.json. Status: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Assign the fetched data to the global posts array
+                    posts = data;
+                    // Once data is loaded, render the index view
+                    updateView(views.INDEX);
+                })
+                .catch(error => {
+                    console.error('Fatal error loading blog data:', error);
+                    // Update the error message to be more explicit about the probable cause
+                    document.getElementById('loading-indicator').innerHTML = `
+                        <p class="text-xl text-red-500 mb-4">Error loading content. Check the console for details.</p>
+                        <p class="text-base text-gray-600">If you are viewing this file directly from your computer (file:///), your browser's security settings may be blocking the data file (posts.json).</p>
+                        <p class="text-base text-gray-600 mt-2">Please try opening this website using a local web server (like VS Code's "Live Server" extension) or by deploying it to a free host like GitHub Pages.</p>
+                    `;
+                });
+        });
+    </script>
+</body>
+</html>

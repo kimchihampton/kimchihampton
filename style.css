@@ -1,0 +1,53 @@
+/* Custom styles for aesthetic */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7f7f7; /* Very light, off-white background */
+    color: #1f2937; /* Dark gray text */
+    transition: background-color 0.3s;
+}
+
+/* Custom scrollbar for a cleaner look */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #d1d5db; /* Light gray */
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af; /* Slightly darker on hover */
+}
+
+/* Style for pre-formatted content (posts) */
+.post-content-container pre {
+    /* Ensures raw text is legible and maintains author's formatting */
+    font-size: 1rem; 
+    line-height: 1.65;
+    padding-top: 0.5rem; /* Add some space above the content for titles/dates */
+}
+
+/* Specific styling for the author image and info container */
+.author-info-grid {
+    display: grid;
+    grid-template-columns: 100px 1fr; /* Image size and content */
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.author-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%; /* Circular image */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 640px) {
+    .author-info-grid {
+        grid-template-columns: 1fr; /* Stack the image and text on small screens */
+        text-align: center;
+    }
+    .author-image {
+        margin: 0 auto; /* Center image when stacked */
+    }
+}
